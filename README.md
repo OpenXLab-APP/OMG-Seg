@@ -1,13 +1,13 @@
 ---
-title: OMG Seg
-emoji: 🔥
+title: OMG-SEG
+emoji: 🌍
 colorFrom: purple
 colorTo: pink
 sdk: gradio
-sdk_version: 4.15.0
-app_file: app.py
+sdk_version: 4.7.1
+app_file: main.py
 pinned: false
-license: mit
+python_version: 3.10
 ---
 
 Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
