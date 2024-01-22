@@ -191,14 +191,15 @@ class Mask2FormerVideoHead(AnchorFreeHead):
                 _dim = cls_embed.size(2)
                 _prototypes = cls_embed.size(1)
 
-                if rank == 0:
-                    back_token = torch.zeros(1, _dim, dtype=torch.float32, device='cuda')
-                    # back_token = back_token / back_token.norm(p=2, dim=-1, keepdim=True)
-                else:
-                    back_token = torch.empty(1, _dim, dtype=torch.float32, device='cuda')
-                if world_size > 1:
-                    dist.broadcast(back_token, src=0)
-                back_token = back_token.to(device='cpu')
+                # if rank == 0:
+                #     back_token = torch.zeros(1, _dim, dtype=torch.float32, device='cuda')
+                #     # back_token = back_token / back_token.norm(p=2, dim=-1, keepdim=True)
+                # else:
+                #     back_token = torch.empty(1, _dim, dtype=torch.float32, device='cuda')
+                # if world_size > 1:
+                #     dist.broadcast(back_token, src=0)
+                # back_token = back_token.to(device='cpu')
+                back_token = torch.zeros(1, _dim, dtype=torch.float32, device='cpu')
                 cls_embed = torch.cat([
                     cls_embed, back_token.repeat(_prototypes, 1)[None]
                 ], dim=0)
