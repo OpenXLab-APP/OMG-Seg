@@ -36,6 +36,7 @@ model = dict(
         sphere_cls=True,
         ov_classifier_name=f'{ov_model_name}_{ov_datasets_name}',
         logit=None,
+        enable_box_query=True,
         in_channels=[192, 384, 768, 1536],  # pass to pixel_decoder inside
         strides=[4, 8, 16, 32],
         feat_channels=256,

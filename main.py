@@ -107,7 +107,7 @@ def get_points_with_draw(image, img_state, evt: gr.SelectData):
     return image
 
 
-def segment_point(image, img_state):
+def segment_point(image, img_state, mode):
     output_img = img_state.img
     h, w = output_img.shape[:2]
 
@@ -125,37 +125,47 @@ def segment_point(image, img_state):
         gt_instances = InstanceData(
             point_coords=selected_point,
         )
-        pb_labels = torch.ones(len(gt_instances), dtype=torch.long, device=device)
-        gt_instances.pb_labels = pb_labels
-        batch_data_samples[0].gt_instances_collected = gt_instances
+        pb_labels = torch.zeros(len(gt_instances), dtype=torch.long, device=device)
+        gt_instances.bp = pb_labels
+        batch_data_samples[0].gt_instances = gt_instances
+        batch_data_samples[0].data_tag = 'sam'
         batch_data_samples[0].set_metainfo(dict(batch_input_shape=(im_h, im_w)))
         batch_data_samples[0].set_metainfo(dict(img_shape=(h, w)))
         is_prompt = True
     else:
         batch_data_samples = [DetDataSample()]
+        batch_data_samples[0].data_tag = 'coco'
         batch_data_samples[0].set_metainfo(dict(batch_input_shape=(im_h, im_w)))
         batch_data_samples[0].set_metainfo(dict(img_shape=(h, w)))
         is_prompt = False
     with torch.no_grad():
-        masks, cls_pred = model.predict_with_point(img_tensor, batch_data_samples)
+        results = model.predict(img_tensor, batch_data_samples, rescale=False)
 
-    assert len(masks) == 1
-    masks = masks[0]
+    masks = results[0]
     if is_prompt:
         masks = masks[0, :h, :w]
-        masks = masks > 0.   # no sigmoid
+        masks = masks > 0.  # no sigmoid
         rgb_shape = tuple(list(masks.shape) + [3])
         color = np.zeros(rgb_shape, dtype=np.uint8)
         color[masks] = np.array([97, 217, 54])
         output_img = (output_img * 0.7 + color * 0.3).astype(np.uint8)
         output_img = Image.fromarray(output_img)
     else:
-        output_img = visualizer._draw_panoptic_seg(
-            output_img,
-            masks['pan_results'].to('cpu').numpy(),
-            classes=CocoPanopticDataset.METAINFO['classes'],
-            palette=CocoPanopticDataset.METAINFO['palette']
-        )
+        if mode == 'Panoptic Segmentation':
+            output_img = visualizer._draw_panoptic_seg(
+                output_img,
+                masks['pan_results'].to('cpu').numpy(),
+                classes=CocoPanopticDataset.METAINFO['classes'],
+                palette=CocoPanopticDataset.METAINFO['palette']
+            )
+        elif mode == 'Instance Segmentation':
+            masks['ins_results'] = masks['ins_results'][masks['ins_results'].scores > .2]
+            output_img = visualizer._draw_instances(
+                output_img,
+                masks['ins_results'].to('cpu').numpy(),
+                classes=CocoPanopticDataset.METAINFO['classes'],
+                palette=CocoPanopticDataset.METAINFO['palette']
+            )
     return image, output_img
 
 
@@ -177,6 +187,12 @@ def register_point_mode():
 
         with gr.Row():
             with gr.Column():
+                mode = gr.Radio(
+                    ["Panoptic Segmentation", "Instance Segmentation"],
+                    label="Mode",
+                    value="Panoptic Segmentation",
+                    info="Please select the segmentation mode. (Ignored if provided with prompt.)"
+                )
                 with gr.Row():
                     with gr.Column():
                         segment_btn = gr.Button("Segment", variant="primary")
@@ -209,7 +225,7 @@ def register_point_mode():
 
         segment_btn.click(
             segment_point,
-            [img_p, img_state],
+            [img_p, img_state, mode],
             [img_p, segm_p]
         )
 

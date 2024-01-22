@@ -140,21 +140,23 @@ class Mask2formerVideo(SingleStageDetector):
             assert len(self.OVERLAPPING) == self.num_classes
             mask_cls_results = self.open_voc_inference(feats, mask_cls_results, mask_pred_results)
 
-        if self.inference_sam:
-            for idx, data_sample in enumerate(batch_data_samples):
-                results = InstanceData()
-                mask = mask_pred_results[idx]
-                img_height, img_width = data_sample.metainfo['img_shape'][:2]
-                mask = mask[:, :img_height, :img_width]
-                ori_height, ori_width = data_sample.metainfo['ori_shape'][:2]
-                mask = F.interpolate(
-                    mask[:, None],
-                    size=(ori_height, ori_width),
-                    mode='bilinear',
-                    align_corners=False)[:, 0]
-                results.masks = mask.sigmoid() > 0.5
-                data_sample.pred_instances = results
-            return batch_data_samples
+        if batch_data_samples[0].data_tag == 'sam':
+            return mask_pred_results.cpu().numpy()
+        # # if self.inference_sam:
+        #     for idx, data_sample in enumerate(batch_data_samples):
+        #         results = InstanceData()
+        #         mask = mask_pred_results[idx]
+        #         img_height, img_width = data_sample.metainfo['img_shape'][:2]
+        #         mask = mask[:, :img_height, :img_width]
+        #         ori_height, ori_width = data_sample.metainfo['ori_shape'][:2]
+        #         mask = F.interpolate(
+        #             mask[:, None],
+        #             size=(ori_height, ori_width),
+        #             mode='bilinear',
+        #             align_corners=False)[:, 0]
+        #         results.masks = mask.sigmoid() > 0.5
+        #         data_sample.pred_instances = results
+        #     return batch_data_samples
 
         if num_frames > 0:
             for frame_id in range(num_frames):
@@ -178,7 +180,7 @@ class Mask2formerVideo(SingleStageDetector):
             )
             results = self.add_pred_to_datasample(batch_data_samples, results_list)
 
-        return results
+        return results_list
 
     def add_pred_to_datasample(self, data_samples: SampleList,
                                results_list: List[dict]) -> SampleList:
