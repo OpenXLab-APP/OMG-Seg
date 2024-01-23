@@ -17,6 +17,8 @@ from mmdet.datasets.coco_panoptic import CocoPanopticDataset
 
 from PIL import ImageDraw
 
+import spaces
+
 IMG_SIZE = 1024
 
 TITLE = "<center><strong><font size='8'>OMG-Seg: Is One Model Good Enough For All Segmentation?<font></strong></center>"
@@ -106,7 +108,7 @@ def get_points_with_draw(image, img_state, evt: gr.SelectData):
     )
     return image
 
-
+@spaces.GPU()
 def segment_point(image, img_state, mode):
     output_img = img_state.img
     h, w = output_img.shape[:2]

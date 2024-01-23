@@ -1,6 +1,7 @@
--f https://download.openmmlab.com/mmcv/dist/cu121/torch2.1.0/index.html
+-f https://download.openmmlab.com/mmcv/dist/cu117/torch2.0.0/index.html
+-f https://download.pytorch.org/whl/cu117
 
-torch==2.1.2
+torch==2.0.1
 torchvision
 mmengine==0.10.2
 mmcv==2.1.0
