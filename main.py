@@ -17,6 +17,9 @@ from mmdet.datasets.coco_panoptic import CocoPanopticDataset
 
 from PIL import ImageDraw
 
+from openxlab.model import download
+download(model_repo='openxlab-app/OMG-Seg', model_name='omg_seg_convl.pth', output='/home/xlab-app-center/models')
+
 import spaces
 
 IMG_SIZE = 1024
